@@ -206,8 +206,8 @@
         maskView = aMaskView;
         cachedLayer.mask = maskView.layer;
         
-        if ([maskView respondsToSelector:@selector(snapshotView)]) {
-            overlayMaskView = [maskView performSelector:@selector(snapshotView)];
+        if ([maskView respondsToSelector:@selector(snapshotViewAfterScreenUpdates:)]) {
+            overlayMaskView = [maskView snapshotViewAfterScreenUpdates:NO];
             [overlay.layer setMask:overlayMaskView.layer];
         }
     }
