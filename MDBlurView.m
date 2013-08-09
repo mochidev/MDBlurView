@@ -131,7 +131,7 @@
     UIView *backdropEffectView = [[backdrop subviews] objectAtIndex:0];
     
     cachedLayer = backdropEffectView.layer;
-    cachedLayer.mask = maskView.layer;
+    cachedLayer.mask = lastMaskView.layer;
     
     [cachedLayer addObserver:self forKeyPath:@"mask" options:NSKeyValueObservingOptionNew context:NULL];
 }
@@ -147,7 +147,7 @@
             UIView *backdropEffectView = [[backdrop subviews] objectAtIndex:0];
             
             cachedLayer = backdropEffectView.layer;
-            cachedLayer.mask = maskView.layer;
+            cachedLayer.mask = lastMaskView.layer;
             
             [cachedLayer addObserver:self forKeyPath:@"mask" options:NSKeyValueObservingOptionNew context:NULL];
         }
@@ -157,8 +157,8 @@
         return;
     } else if (object == cachedLayer && [keyPath isEqual:@"mask"]) {
         CALayer *newMask = [change objectForKey:NSKeyValueChangeNewKey];
-        if (newMask != maskView.layer) {
-            cachedLayer.mask = maskView.layer;
+        if (newMask != lastMaskView.layer) {
+            cachedLayer.mask = lastMaskView.layer;
         }
         return;
     }
@@ -179,7 +179,8 @@
 {
     [super setFrame:frame];
     
-    maskView.frame = self.bounds;
+    lastMaskView.frame = self.bounds;
+    lastOverlayMaskView.frame = self.bounds;
     cachedLayer.frame = self.bounds;
 }
 
@@ -199,23 +200,59 @@
 
 - (void)setMaskView:(UIView *)aMaskView
 {
-    if (maskView != aMaskView) {
+    if (_maskView != aMaskView) {
         [aMaskView removeFromSuperview];
         aMaskView.frame = self.bounds;
         
-        maskView = aMaskView;
-        cachedLayer.mask = maskView.layer;
-        
-        if ([maskView respondsToSelector:@selector(snapshotViewAfterScreenUpdates:)]) {
-            overlayMaskView = [maskView snapshotViewAfterScreenUpdates:NO];
-            [overlay.layer setMask:overlayMaskView.layer];
-        }
+        _maskView = aMaskView;
     }
+    lastMaskView = _maskView;
+    cachedLayer.mask = _maskView.layer;
 }
 
-- (UIView *)maskView
+- (void)setOverlayMaskView:(UIView *)overlayMaskView
 {
-    return maskView;
+    NSAssert(!overlayMaskView || _maskView != overlayMaskView, @"overlayMaskView <%@: 0x%p> must be different from maskView <%@: 0x%p>!", NSStringFromClass(_maskView.class), _maskView, NSStringFromClass(overlayMaskView.class), overlayMaskView);
+    if (_overlayMaskView != overlayMaskView) {
+        [overlayMaskView removeFromSuperview];
+        overlayMaskView.frame = self.bounds;
+        
+        _overlayMaskView = overlayMaskView;
+    }
+    lastOverlayMaskView = _overlayMaskView;
+    overlay.layer.mask = overlayMaskView.layer;
+}
+
+- (void)setMaskImage:(UIImage *)maskImage
+{
+    _maskImage = maskImage;
+    
+    if (!maskImage) {
+        lastMaskView = nil;
+        cachedLayer.mask = nil;
+        lastOverlayMaskView = nil;
+        overlay.layer.mask = nil;
+        
+        return;
+    }
+    
+    if (!maskViewA) {
+        maskViewA = [[UIImageView alloc] initWithFrame:self.bounds];
+    }
+    
+    lastMaskView = maskViewA;
+    maskViewA.frame = self.bounds;
+    maskViewA.image = _maskImage;
+    cachedLayer.mask = maskViewA.layer;
+    
+    if (!maskViewB) {
+        maskViewB = [[UIImageView alloc] initWithFrame:self.bounds];
+    }
+    
+    lastOverlayMaskView = maskViewB;
+    maskViewB.frame = self.bounds;
+    maskViewB.image = _maskImage;
+    overlay.layer.mask = maskViewB.layer;
 }
 
 @end

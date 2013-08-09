@@ -39,8 +39,14 @@
     UIView *bar;
     UIView *overlay;
     
-    UIView *maskView;
-    UIView *overlayMaskView;
+    UIImageView *maskViewA;
+    UIImageView *maskViewB;
+    
+    UIView *lastMaskView;
+    UIView *lastOverlayMaskView;
+    
+    UIView *_maskView;
+    UIView *_overlayMaskView;
     
     UIView *cachedBarBackground;
     CALayer *cachedLayer;
@@ -49,6 +55,9 @@
 @property (nonatomic, strong) UIColor *backgroundTintColor UI_APPEARANCE_SELECTOR;
 @property (nonatomic) CGFloat blurRadius UI_APPEARANCE_SELECTOR;
 
+@property (nonatomic, strong) UIImage *maskImage; // use this! Supports expandable images.
+
 @property (nonatomic, strong) UIView *maskView;
+@property (nonatomic, strong) UIView *overlayMaskView; // needs to be different from maskView!;
 
 @end
