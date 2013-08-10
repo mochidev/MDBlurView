@@ -53,7 +53,8 @@
 }
 
 @property (nonatomic, strong) UIColor *backgroundTintColor UI_APPEARANCE_SELECTOR;
-@property (nonatomic) CGFloat blurRadius UI_APPEARANCE_SELECTOR;
+@property (nonatomic) CGFloat blurRadius UI_APPEARANCE_SELECTOR __attribute__((deprecated("Use blurFraction instead.")));
+@property (nonatomic) CGFloat blurFraction UI_APPEARANCE_SELECTOR;
 
 @property (nonatomic, strong) UIImage *maskImage; // use this! Supports expandable images.
 

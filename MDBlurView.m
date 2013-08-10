@@ -86,7 +86,7 @@
         bar.opaque = NO;
         cachedLayer = self.layer;
     }
-    bar.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
+//    bar.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
     
     [self addSubview:bar];
     [self fixNavigationBar:bar];
@@ -177,19 +177,44 @@
 
 - (void)setFrame:(CGRect)frame
 {
+    CGRect oldBounds = self.bounds;
+    
     [super setFrame:frame];
     
-    lastMaskView.frame = self.bounds;
-    lastOverlayMaskView.frame = self.bounds;
-    cachedLayer.frame = self.bounds;
+    CGRect newBounds = self.bounds;
+    
+    if (lastMaskView) {
+        [CATransaction begin];
+        [CATransaction disableActions];
+        oldBounds.origin = CGPointZero;
+        if (newBounds.size.width > oldBounds.size.width) oldBounds.size.width = newBounds.size.width;
+        if (newBounds.size.height > oldBounds.size.height) oldBounds.size.height = newBounds.size.height;
+        bar.frame = oldBounds;
+        [CATransaction commit];
+    } else {
+        bar.frame = newBounds;
+    }
+    
+    lastMaskView.frame = newBounds;
+    lastOverlayMaskView.frame = newBounds;
 }
 
 #pragma mark - Accessors
 
 - (void)setBlurRadius:(CGFloat)blurRadius
 {
-    _blurRadius = blurRadius;
-    bar.alpha = blurRadius;
+    [self setBlurFraction:blurRadius];
+}
+
+- (CGFloat)blurRadius
+{
+    return _blurFraction;
+}
+
+- (void)setBlurFraction:(CGFloat)blurFraction
+{
+    _blurFraction = blurFraction;
+    bar.alpha = blurFraction;
 }
 
 - (void)setBackgroundTintColor:(UIColor *)backgroundTintColor
@@ -200,6 +225,7 @@
 
 - (void)setMaskView:(UIView *)aMaskView
 {
+    bar.frame = self.bounds;
     if (_maskView != aMaskView) {
         [aMaskView removeFromSuperview];
         aMaskView.frame = self.bounds;
@@ -212,6 +238,8 @@
 
 - (void)setOverlayMaskView:(UIView *)overlayMaskView
 {
+    bar.frame = self.bounds;
+    
     NSAssert(!overlayMaskView || _maskView != overlayMaskView, @"overlayMaskView <%@: 0x%p> must be different from maskView <%@: 0x%p>!", NSStringFromClass(_maskView.class), _maskView, NSStringFromClass(overlayMaskView.class), overlayMaskView);
     if (_overlayMaskView != overlayMaskView) {
         [overlayMaskView removeFromSuperview];
@@ -225,6 +253,8 @@
 
 - (void)setMaskImage:(UIImage *)maskImage
 {
+    bar.frame = self.bounds;
+    
     _maskImage = maskImage;
     
     if (!maskImage) {
