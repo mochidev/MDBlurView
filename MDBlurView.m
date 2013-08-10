@@ -219,8 +219,12 @@
 
 - (void)setBackgroundTintColor:(UIColor *)backgroundTintColor
 {
-    _backgroundTintColor = backgroundTintColor;
     overlay.backgroundColor = backgroundTintColor;
+}
+
+- (UIColor *)backgroundTintColor
+{
+    return overlay.backgroundColor;
 }
 
 - (void)setMaskView:(UIView *)aMaskView
