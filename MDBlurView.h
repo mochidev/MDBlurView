@@ -43,22 +43,23 @@
     UIImageView *maskViewB;
     
     UIView *lastMaskView;
-    UIView *lastOverlayMaskView;
+    UIView *lastTintMaskView;
     
     UIView *_maskView;
-    UIView *_overlayMaskView;
+    UIView *_tintMaskView;
     
     UIView *cachedBarBackground;
     CALayer *cachedLayer;
 }
 
 @property (nonatomic, strong) UIColor *backgroundTintColor UI_APPEARANCE_SELECTOR;
-@property (nonatomic) CGFloat blurRadius UI_APPEARANCE_SELECTOR __attribute__((deprecated("Use blurFraction instead.")));
 @property (nonatomic) CGFloat blurFraction UI_APPEARANCE_SELECTOR;
+@property (nonatomic) CGFloat blurRadius UI_APPEARANCE_SELECTOR __attribute__((deprecated("Use blurFraction instead.")));
 
-@property (nonatomic, strong) UIImage *maskImage; // use this! Supports expandable images.
+@property (nonatomic, strong) UIImage *maskImage; // use this! Supports resizable images.
 
-@property (nonatomic, strong) UIView *maskView;
-@property (nonatomic, strong) UIView *overlayMaskView; // needs to be different from maskView!;
+@property (nonatomic, strong) UIView *maskView; // if you need more control, use this.
+@property (nonatomic, strong) UIView *tintMaskView; // needs to be different from maskView!;
+@property (nonatomic, strong) UIView *overlayMaskView __attribute__((deprecated("Use tintMaskView instead.")));
 
 @end

@@ -53,7 +53,7 @@
     
     MDBlurView *appearanceProxy = [self appearance];
     appearanceProxy.backgroundTintColor = [UIColor colorWithWhite:1 alpha:0];
-    appearanceProxy.blurRadius = 1;
+    appearanceProxy.blurFraction = 1;
 }
 
 - (id)initWithFrame:(CGRect)frame
@@ -196,19 +196,19 @@
     }
     
     lastMaskView.frame = newBounds;
-    lastOverlayMaskView.frame = newBounds;
+    lastTintMaskView.frame = newBounds;
 }
 
 #pragma mark - Accessors
 
 - (void)setBlurRadius:(CGFloat)blurRadius
 {
-    [self setBlurFraction:blurRadius];
+    self.blurFraction = blurRadius;
 }
 
 - (CGFloat)blurRadius
 {
-    return _blurFraction;
+    return self.blurFraction;
 }
 
 - (void)setBlurFraction:(CGFloat)blurFraction
@@ -238,17 +238,27 @@
 
 - (void)setOverlayMaskView:(UIView *)overlayMaskView
 {
+    self.tintMaskView = overlayMaskView;
+}
+
+- (UIView *)overlayMaskView
+{
+    return self.tintMaskView;
+}
+
+- (void)setTintMaskView:(UIView *)tintMaskView
+{
     bar.frame = self.bounds;
     
-    NSAssert(!overlayMaskView || _maskView != overlayMaskView, @"overlayMaskView <%@: 0x%p> must be different from maskView <%@: 0x%p>!", NSStringFromClass(_maskView.class), _maskView, NSStringFromClass(overlayMaskView.class), overlayMaskView);
-    if (_overlayMaskView != overlayMaskView) {
-        [overlayMaskView removeFromSuperview];
-        overlayMaskView.frame = self.bounds;
+    NSAssert(!tintMaskView || _maskView != tintMaskView, @"tintMaskView <%@: 0x%p> must be different from maskView <%@: 0x%p>!", NSStringFromClass(_maskView.class), _maskView, NSStringFromClass(tintMaskView.class), tintMaskView);
+    if (_tintMaskView != tintMaskView) {
+        [tintMaskView removeFromSuperview];
+        tintMaskView.frame = self.bounds;
         
-        _overlayMaskView = overlayMaskView;
+        _tintMaskView = tintMaskView;
     }
-    lastOverlayMaskView = _overlayMaskView;
-    overlay.layer.mask = overlayMaskView.layer;
+    lastTintMaskView = _tintMaskView;
+    overlay.layer.mask = tintMaskView.layer;
 }
 
 - (void)setMaskImage:(UIImage *)maskImage
@@ -260,7 +270,7 @@
     if (!maskImage) {
         lastMaskView = nil;
         cachedLayer.mask = nil;
-        lastOverlayMaskView = nil;
+        lastTintMaskView = nil;
         overlay.layer.mask = nil;
         
         return;
@@ -279,7 +289,7 @@
         maskViewB = [[UIImageView alloc] initWithFrame:self.bounds];
     }
     
-    lastOverlayMaskView = maskViewB;
+    lastTintMaskView = maskViewB;
     maskViewB.frame = self.bounds;
     maskViewB.image = _maskImage;
     overlay.layer.mask = maskViewB.layer;
