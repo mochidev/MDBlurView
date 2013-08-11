@@ -34,6 +34,12 @@
 #import <UIKit/UIKit.h>
 #import <QuartzCore/QuartzCore.h>
 
+typedef NS_ENUM(NSUInteger, MDBlurLuminosity) {
+    MDBlurLuminosityAutomatic = 0,
+    MDBlurLuminosityBright = 1,
+    MDBlurLuminosityDark = 2
+};
+
 /**
  MDBlurView provides an easy way for your interfaces to incorporate auto-bluring views into your layouts. It provides a greate way to not only place one anywhere, but also to color it, control how much bluring you get, and best of all mask it accordingly.
  
@@ -47,7 +53,6 @@
 @interface MDBlurView : UIView {
 @private
     UIView *bar;
-    UIView *overlay;
     
     UIImageView *maskViewA;
     UIImageView *maskViewB;
@@ -60,6 +65,8 @@
     
     UIView *cachedBarBackground;
     CALayer *cachedLayer;
+    
+    CGFloat alpha;
 }
 
 /**
@@ -102,6 +109,18 @@
 
 @property (nonatomic, strong) UIImage *maskImage; // use this! Supports resizable images.
 
+/// @name Advanced
+
+@property (nonatomic) MDBlurLuminosity blurLuminosity;
+
+/**
+ @property tintView
+ @abstract The blur view's underlying tint view.
+ 
+ @discussion This is useful if you want to animate the tint alpha or set an overlay image
+ */
+
+@property (nonatomic, readonly) UIImageView *tintView;
 
 /**
  @property maskView

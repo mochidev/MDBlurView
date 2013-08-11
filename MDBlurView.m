@@ -33,6 +33,32 @@
 
 #import "MDBlurView.h"
 
+//const CGFloat rY = 0.212655;
+//const CGFloat gY = 0.715158;
+//const CGFloat bY = 0.072187;
+//
+//// Inverse of sRGB "gamma" function. (approx 2.2)
+//CGFloat inv_gam_sRGB(CGFloat c) {
+//    if (c <= 0.04045)
+//        return c/12.92;
+//    else
+//        return pow(((c+0.055)/(1.055)), 2.2);
+//}
+//
+//// sRGB "gamma" function (approx 2.2)
+//CGFloat gam_sRGB(CGFloat v) {
+//    if (v <= 0.0031308)
+//        v *= 12.92;
+//    else
+//        v = 1.055*pow(v, 1.0/2.2) - 0.055;
+//    return v;
+//}
+//
+//// luminance value
+//CGFloat luminance(CGFloat r, CGFloat g, CGFloat b) {
+//    return gam_sRGB(rY*inv_gam_sRGB(r) + gY*inv_gam_sRGB(g) + bY*inv_gam_sRGB(b));
+//}
+
 @implementation MDBlurView
 
 #pragma mark - AboutController
@@ -91,11 +117,13 @@
     [self addSubview:bar];
     [self fixNavigationBar:bar];
     
-    overlay = [[UIView alloc] initWithFrame:self.bounds];
-    overlay.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
-    overlay.backgroundColor = nil;
-    overlay.userInteractionEnabled = NO;
-    [self addSubview:overlay];
+    _tintView = [[UIImageView alloc] initWithFrame:self.bounds];
+    _tintView.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
+    _tintView.backgroundColor = nil;
+    _tintView.userInteractionEnabled = NO;
+    [self addSubview:_tintView];
+    
+    alpha = 1.;
 }
 
 #pragma mark - Voodoo
@@ -175,6 +203,18 @@
 
 #pragma mark - Overrides
 
+- (void)setAlpha:(CGFloat)newAlpha // animating the alpha usually explodes, so manually do it to our two subviews.
+{
+    alpha = newAlpha;
+    bar.alpha = newAlpha*_blurFraction;
+    _tintView.alpha = newAlpha;
+}
+
+- (CGFloat)alpha
+{
+    return alpha;
+}
+
 - (void)setFrame:(CGRect)frame
 {
     CGRect oldBounds = self.bounds;
@@ -201,6 +241,13 @@
 
 #pragma mark - Accessors
 
+- (void)setBlurLuminosity:(MDBlurLuminosity)blurLuminosity
+{
+    _blurLuminosity = blurLuminosity;
+    
+    self.backgroundTintColor = self.backgroundTintColor;
+}
+
 - (void)setBlurRadius:(CGFloat)blurRadius
 {
     self.blurFraction = blurRadius;
@@ -214,17 +261,70 @@
 - (void)setBlurFraction:(CGFloat)blurFraction
 {
     _blurFraction = blurFraction;
-    bar.alpha = blurFraction;
+    bar.alpha = blurFraction*alpha;
 }
 
 - (void)setBackgroundTintColor:(UIColor *)backgroundTintColor
 {
-    overlay.backgroundColor = backgroundTintColor;
+    if ([bar respondsToSelector:@selector(setBarStyle:)]) {
+        if (_blurLuminosity == MDBlurLuminosityAutomatic) {
+            CGFloat r = 0;
+            CGFloat g = 0;
+            CGFloat b = 0;
+            CGFloat a = 0;
+            
+//            backgroundTintColor =[backgroundTintColor colorWithAlphaComponent:1];
+            [backgroundTintColor getRed:&r green:&g blue:&b alpha:&a];
+            
+            CGFloat l = 0.212655*r + 0.715158*g + 0.072187*b;
+            
+//            NSLog(@"Luminance A: %f", l);
+            
+            if (fabsf(r-l) < 0.05 && fabsf(g-l) < 0.05 && fabsf(b-l) < 0.05) {
+                l *= 1.25;
+            }
+            
+//            NSLog(@"Luminance B: %f", l);
+            
+            if (alpha < 0.05 || l > 0.5) {
+                [(UINavigationBar *)bar setBarStyle:UIBarStyleDefault];
+            } else {
+                [(UINavigationBar *)bar setBarStyle:UIBarStyleBlack];
+            }
+        } else if (_blurLuminosity == MDBlurLuminosityBright) {
+            [(UINavigationBar *)bar setBarStyle:UIBarStyleDefault];
+        } else if (_blurLuminosity == MDBlurLuminosityDark) {
+            [(UINavigationBar *)bar setBarStyle:UIBarStyleBlack];
+        }
+    } else {
+        if (_blurLuminosity == MDBlurLuminosityAutomatic) {
+            CGFloat r = 0;
+            CGFloat g = 0;
+            CGFloat b = 0;
+            CGFloat a = 0;
+            
+            [backgroundTintColor getRed:&r green:&g blue:&b alpha:&a];
+            
+            CGFloat l = 0.212655*r + 0.715158*g + 0.072187*b;
+            
+            if (alpha < 0.05 || l > 0.5) {
+                [(UINavigationBar *)bar setBarStyle:UIBarStyleDefault];
+            } else {
+                [(UINavigationBar *)bar setBarStyle:UIBarStyleBlack];
+            }
+        } else if (_blurLuminosity == MDBlurLuminosityBright) {
+            bar.backgroundColor = [UIColor colorWithWhite:1 alpha:0.9];
+        } else if (_blurLuminosity == MDBlurLuminosityDark) {
+            bar.backgroundColor = [UIColor colorWithWhite:0 alpha:0.9];
+        }
+    }
+    
+    _tintView.backgroundColor = backgroundTintColor;
 }
 
 - (UIColor *)backgroundTintColor
 {
-    return overlay.backgroundColor;
+    return _tintView.backgroundColor;
 }
 
 - (void)setMaskView:(UIView *)aMaskView
@@ -262,7 +362,7 @@
         _tintMaskView = tintMaskView;
     }
     lastTintMaskView = _tintMaskView;
-    overlay.layer.mask = tintMaskView.layer;
+    _tintView.layer.mask = tintMaskView.layer;
 }
 
 - (void)setMaskImage:(UIImage *)maskImage
@@ -275,7 +375,7 @@
         lastMaskView = nil;
         cachedLayer.mask = nil;
         lastTintMaskView = nil;
-        overlay.layer.mask = nil;
+        _tintView.layer.mask = nil;
         
         return;
     }
@@ -296,7 +396,7 @@
     lastTintMaskView = maskViewB;
     maskViewB.frame = self.bounds;
     maskViewB.image = _maskImage;
-    overlay.layer.mask = maskViewB.layer;
+    _tintView.layer.mask = maskViewB.layer;
 }
 
 @end
