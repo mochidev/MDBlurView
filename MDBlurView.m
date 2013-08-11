@@ -281,7 +281,7 @@
 //            NSLog(@"Luminance A: %f", l);
             
             if (fabsf(r-l) < 0.05 && fabsf(g-l) < 0.05 && fabsf(b-l) < 0.05) {
-                l *= 1.25;
+                l *= 1.25; // boost greys
             }
             
 //            NSLog(@"Luminance B: %f", l);
