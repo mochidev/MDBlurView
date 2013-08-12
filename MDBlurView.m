@@ -264,7 +264,7 @@
             [self fixNavigationBar:bar];
     } else {
         if (blurLuminosity == MDBlurLuminosityDark) {
-            bar.backgroundColor = [UIColor colorWithWhite:0 alpha:0.7];
+            bar.backgroundColor = [UIColor colorWithWhite:0.2 alpha:0.7];
         } else {
             bar.backgroundColor = [UIColor colorWithWhite:1 alpha:0.9];
         }
