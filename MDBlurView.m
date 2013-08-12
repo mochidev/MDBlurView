@@ -133,6 +133,9 @@
     navBar.userInteractionEnabled = NO;
     if (navBar.subviews.count == 0) return;
     
+    [cachedBarBackground.layer removeObserver:self forKeyPath:@"sublayers"];
+    [cachedLayer removeObserver:self forKeyPath:@"mask"];
+    
     UIView *barBackground = [navBar.subviews objectAtIndex:0];
     NSMutableArray *itemsToRemove = [[NSMutableArray alloc] init];
     
@@ -245,7 +248,27 @@
 {
     _blurLuminosity = blurLuminosity;
     
-    self.backgroundTintColor = self.backgroundTintColor;
+    if (_blurLuminosity == MDBlurLuminosityAutomatic) {
+        blurLuminosity = calculatedLuminosity;
+    }
+    
+    if ([bar respondsToSelector:@selector(setBarStyle:)]) {
+        UIBarStyle oldStyle = [(UINavigationBar *)bar barStyle];
+        if (blurLuminosity == MDBlurLuminosityDark) {
+            [(UINavigationBar *)bar setBarStyle:UIBarStyleBlack];
+        } else {
+            [(UINavigationBar *)bar setBarStyle:UIBarStyleDefault];
+        }
+        
+        if (oldStyle != [(UINavigationBar *)bar barStyle])
+            [self fixNavigationBar:bar];
+    } else {
+        if (blurLuminosity == MDBlurLuminosityDark) {
+            bar.backgroundColor = [UIColor colorWithWhite:0 alpha:0.9];
+        } else {
+            bar.backgroundColor = [UIColor colorWithWhite:1 alpha:0.9];
+        }
+    }
 }
 
 - (void)setBlurRadius:(CGFloat)blurRadius
@@ -266,58 +289,26 @@
 
 - (void)setBackgroundTintColor:(UIColor *)backgroundTintColor
 {
-    if ([bar respondsToSelector:@selector(setBarStyle:)]) {
-        if (_blurLuminosity == MDBlurLuminosityAutomatic) {
-            CGFloat r = 0;
-            CGFloat g = 0;
-            CGFloat b = 0;
-            CGFloat a = 0;
-            
-//            backgroundTintColor =[backgroundTintColor colorWithAlphaComponent:1];
-            [backgroundTintColor getRed:&r green:&g blue:&b alpha:&a];
-            
-            CGFloat l = 0.212655*r + 0.715158*g + 0.072187*b;
-            
-//            NSLog(@"Luminance A: %f", l);
-            
-            if (fabsf(r-l) < 0.05 && fabsf(g-l) < 0.05 && fabsf(b-l) < 0.05) {
-                l *= 1.25; // boost greys
-            }
-            
-//            NSLog(@"Luminance B: %f", l);
-            
-            if (alpha < 0.05 || l > 0.5) {
-                [(UINavigationBar *)bar setBarStyle:UIBarStyleDefault];
-            } else {
-                [(UINavigationBar *)bar setBarStyle:UIBarStyleBlack];
-            }
-        } else if (_blurLuminosity == MDBlurLuminosityBright) {
-            [(UINavigationBar *)bar setBarStyle:UIBarStyleDefault];
-        } else if (_blurLuminosity == MDBlurLuminosityDark) {
-            [(UINavigationBar *)bar setBarStyle:UIBarStyleBlack];
-        }
-    } else {
-        if (_blurLuminosity == MDBlurLuminosityAutomatic) {
-            CGFloat r = 0;
-            CGFloat g = 0;
-            CGFloat b = 0;
-            CGFloat a = 0;
-            
-            [backgroundTintColor getRed:&r green:&g blue:&b alpha:&a];
-            
-            CGFloat l = 0.212655*r + 0.715158*g + 0.072187*b;
-            
-            if (alpha < 0.05 || l > 0.5) {
-                [(UINavigationBar *)bar setBarStyle:UIBarStyleDefault];
-            } else {
-                [(UINavigationBar *)bar setBarStyle:UIBarStyleBlack];
-            }
-        } else if (_blurLuminosity == MDBlurLuminosityBright) {
-            bar.backgroundColor = [UIColor colorWithWhite:1 alpha:0.9];
-        } else if (_blurLuminosity == MDBlurLuminosityDark) {
-            bar.backgroundColor = [UIColor colorWithWhite:0 alpha:0.9];
-        }
+    CGFloat r = 0;
+    CGFloat g = 0;
+    CGFloat b = 0;
+    CGFloat a = 0;
+    
+    [backgroundTintColor getRed:&r green:&g blue:&b alpha:&a];
+    
+    CGFloat l = 0.212655*r + 0.715158*g + 0.072187*b;
+    
+    if (fabsf(r-l) < 0.05 && fabsf(g-l) < 0.05 && fabsf(b-l) < 0.05) {
+        l *= 1.25; // boost greys
     }
+    
+    if (a < 0.05 || l > 0.5) {
+        calculatedLuminosity = MDBlurLuminosityBright;
+    } else {
+        calculatedLuminosity = MDBlurLuminosityDark;
+    }
+    
+    self.blurLuminosity = self.blurLuminosity;
     
     _tintView.backgroundColor = backgroundTintColor;
 }

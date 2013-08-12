@@ -67,6 +67,8 @@ typedef NS_ENUM(NSUInteger, MDBlurLuminosity) {
     CALayer *cachedLayer;
     
     CGFloat alpha;
+    
+    MDBlurLuminosity calculatedLuminosity;
 }
 
 /**
