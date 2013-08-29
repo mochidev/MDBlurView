@@ -100,8 +100,6 @@
 
 - (void)_performInit
 {
-    self.userInteractionEnabled = NO;
-    
     self.opaque = NO;
     self.backgroundColor = nil;
     bar = [[UINavigationBar alloc] initWithFrame:self.bounds];
