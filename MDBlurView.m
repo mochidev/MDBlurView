@@ -114,14 +114,14 @@
     }
 //    bar.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
     
-    [self addSubview:bar];
+    [self insertSubview:bar atIndex:0];
     [self fixNavigationBar:bar];
     
     _tintView = [[UIImageView alloc] initWithFrame:self.bounds];
     _tintView.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
     _tintView.backgroundColor = nil;
     _tintView.userInteractionEnabled = NO;
-    [self addSubview:_tintView];
+    [self insertSubview:_tintView aboveSubview:bar];
     
     alpha = 1.;
 }
